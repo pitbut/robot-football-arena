@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🤖 Роботы-Футболисты</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            color: white;
+            overflow: hidden;
+        }
+
+        .mobile-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Компактный заголовок */
+        .compact-header {
+            background: rgba(0,0,0,0.3);
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            font-weight: bold;
+        }
+
+        .connection-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        /* Видео секция - занимает верхнюю половину */
+        .video-section {
+            flex: 1;
+            background: rgba(0,0,0,0.4);
+            position: relative;
+            margin: 5px;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .video-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 60px;
+            background: #000;
+            border-radius: 10px;
+            margin: 10px;
+            overflow: hidden;
+        }
+
+        .video-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #333, #555);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        /* Компактная панель счета и статуса */
+        .info-bar {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            height: 45px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            font-size: 12px;
+            backdrop-filter: blur(5px);
+        }
+
+        .score-compact {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .team-score-mini {
+            text-align: center;
+        }
+
+        .score-mini {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .status-mini {
+            text-align: right;
+            opacity: 0.8;
+        }
+
+        /* Управление - занимает нижнюю половину */
+        .controls-section {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            margin: 0 5px 5px 5px;
+            border-radius: 15px;
+            padding: 10px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Быстрый выбор робота */
+        .robot-quick-select {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .robot-btn-mini {
+            padding: 8px 4px;
+            border: none;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .robot-btn-mini.blue {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+        }
+
+        .robot-btn-mini.red {
+            background: linear-gradient(45deg, #F44336, #D32F2F);
+        }
+
+        .robot-btn-mini.selected {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+
+        .robot-btn-mini:active {
+            transform: scale(0.95);
+        }
+
+        /* Компактное управление движением */
+        .movement-controls {
+            flex: 1;
+            display: grid;
+            grid-template-areas: 
+                "info info info kick"
+                ". up . kick"
+                "left stop right kick"
+                ". down . speed";
+            gap: 8px;
+            align-items: center;
+            justify-items: center;
+        }
+
+        .control-btn {
+            width: 55px;
+            height: 55px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.25);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .control-btn:active {
+            transform: scale(0.9);
+            background: rgba(255,255,255,0.4);
+        }
+
+        .btn-up { grid-area: up; }
+        .btn-down { grid-area: down; }
+        .btn-left { grid-area: left; }
+        .btn-right { grid-area: right; }
+        .btn-stop { 
+            grid-area: stop; 
+            background: rgba(244, 67, 54, 0.3);
+            font-size: 14px;
+        }
+
+        .btn-kick { 
+            grid-area: kick; 
+            background: linear-gradient(45deg, #FF6B6B, #FF5252);
+            width: 65px;
+            height: 65px;
+            font-size: 16px;
+            flex-direction: column;
+        }
+
+        .btn-speed {
+            grid-area: speed;
+            background: rgba(255, 193, 7, 0.3);
+            font-size: 12px;
+            width: 45px;
+            height: 45px;
+        }
+
+        .robot-info-mini {
+            grid-area: info;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 11px;
+            text-align: center;
+            width: 100%;
+            max-height: 35px;
+            overflow: hidden;
+        }
+
+        /* Боковая панель для чата (скрыта по умолчанию) */
+        .chat-toggle {
+            position: fixed;
+            top: 50%;
+            right: 5px;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .chat-panel {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 280px;
+            height: 100vh;
+            background: rgba(0,0,0,0.9);
+            transition: right 0.3s ease;
+            padding: 60px 15px 15px 15px;
+            z-index: 200;
+            backdrop-filter: blur(20px);
+        }
+
+        .chat-panel.open {
+            right: 0;
+        }
+
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .close-chat {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .viewers-mini {
+            background: #FF6B6B;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .chat-messages {
+            height: calc(100vh - 180px);
+            overflow-y: auto;
+            margin-bottom: 15px;
+            font-size: 12px;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input-container input {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 15px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            outline: none;
+            font-size: 12px;
+        }
+
+        .chat-input-container button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 15px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* Ландшафтная ориентация */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .mobile-container {
+                flex-direction: row;
+            }
+
+            .video-section {
+                flex: 1.2;
+            }
+
+            .controls-section {
+                flex: 0.8;
+                margin: 5px 5px 5px 0;
+            }
+
+            .movement-controls {
+                grid-template-areas: 
+                    "info info info"
+                    ". up kick"
+                    "left stop right"
+                    ". down speed";
+            }
+
+            .btn-kick {
+                width: 55px;
+                height: 55px;
+            }
+        }
+
+        /* Анимации */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .btn-active {
+            animation: pulse 0.2s ease-out;
+        }
+
+        /* Затемнение при открытом чате */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 150;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- Компактный заголовок -->
+        <div class="compact-header">
+            <div class="logo">🤖 Роботы-Футболисты</div>
+            <div>
+                <span class="connection-dot"></span>
+                <span id="connectionStatus">Подключено</span>
+            </div>
+        </div>
+
+        <!-- Видео секция -->
+        <div class="video-section">
+            <div class="video-container">
+                <div class="video-placeholder">
+                    <div style="text-align: center;">
+                        <div style="font-size: 36px;">📹</div>
+                        <div>Поле</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-bar">
+                <div class="score-compact">
+                    <div class="team-score-mini">
+                        <div style="color: #2196F3;">🔵</div>
+                        <div class="score-mini" id="blueScore">0</div>
+                    </div>
+                    <div style="margin: 0 8px;">VS</div>
+                    <div class="team-score-mini">
+                        <div style="color: #F44336;">🔴</div>
+                        <div class="score-mini" id="redScore">0</div>
+                    </div>
+                </div>
+                <div class="status-mini">
+                    <div>Роботы: <span id="activeRobots">2/4</span></div>
+                    <div>Пинг: <span id="latency">~180ms</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Управление -->
+        <div class="controls-section">
+            <!-- Быстрый выбор робота -->
+            <div class="robot-quick-select">
+                <button class="robot-btn-mini blue" onclick="selectRobot('blue1')">Б1</button>
+                <button class="robot-btn-mini blue" onclick="selectRobot('blue2')">Б2</button>
+                <button class="robot-btn-mini red" onclick="selectRobot('red1')">К1</button>
+                <button class="robot-btn-mini red" onclick="selectRobot('red2')">К2</button>
+            </div>
+
+            <!-- Управление движением -->
+            <div class="movement-controls">
+                <div class="robot-info-mini" id="robotInfo">Выберите робота</div>
+                
+                <button class="control-btn btn-up" 
+                        ontouchstart="startCommand('forward')" 
+                        ontouchend="stopCommand()">↑</button>
+                
+                <button class="control-btn btn-left" 
+                        ontouchstart="startCommand('left')" 
+                        ontouchend="stopCommand()">←</button>
+                
+                <button class="control-btn btn-stop" 
+                        onclick="sendCommand('stop')">⏹</button>
+                
+                <button class="control-btn btn-right" 
+                        ontouchstart="startCommand('right')" 
+                        ontouchend="stopCommand()">→</button>
+                
+                <button class="control-btn btn-down" 
+                        ontouchstart="startCommand('backward')" 
+                        ontouchend="stopCommand()">↓</button>
+                
+                <button class="control-btn btn-kick" onclick="sendCommand('kick')">
+                    ⚽<br><small>УДАР</small>
+                </button>
+                
+                <button class="control-btn btn-speed" onclick="changeSpeed()" id="speedBtn">
+                    ⚡<br><small>80%</small>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Кнопка чата -->
+    <button class="chat-toggle" onclick="toggleChat()">💬</button>
+
+    <!-- Затемнение -->
+    <div class="overlay" onclick="closeChat()"></div>
+
+    <!-- Панель чата -->
+    <div class="chat-panel" id="chatPanel">
+        <div class="chat-header">
+            <div>
+                💬 Чат 
+                <span class="viewers-mini" id="viewerCount">47</span>
+            </div>
+            <button class="close-chat" onclick="closeChat()">×</button>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div style="opacity: 0.7;">[15:42] Система: Добро пожаловать!</div>
+            <div>[15:43] Алекс: Круто! 🔥</div>
+            <div>[15:44] Мария: Синие вперед! 💙</div>
+            <div>[15:45] Гость: Как управлять?</div>
+        </div>
+        
+        <div class="chat-input-container">
+            <input type="text" id="chatInput" placeholder="Сообщение..." maxlength="60">
+            <button onclick="sendMessage()">📤</button>
+        </div>
+    </div>
+
+    <script>
+        let selectedRobot = null;
+        let currentSpeed = 200;
+        let speedLevel = 2; // 0,1,2 (50%, 80%, 100%)
+        let activeCommand = null;
+        let isConnected = true;
+
+        // Инициализация
+        window.addEventListener('load', () => {
+            setupTouchEvents();
+            startMonitoring();
+        });
+
+        function selectRobot(robotId) {
+            vibrateDevice(50);
+            
+            // Снимаем выделение
+            document.querySelectorAll('.robot-btn-mini').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            // Выделяем новый
+            event.target.classList.add('selected');
+            selectedRobot = robotId;
+            
+            // Обновляем информацию
+            const names = {
+                'blue1': '🔵 Синий #1',
+                'blue2': '🔵 Синий #2',
+                'red1': '🔴 Красный #1',
+                'red2': '🔴 Красный #2'
+            };
+            
+            document.getElementById('robotInfo').innerHTML = 
+                `${names[robotId]} | 🔋87% | ✅Готов`;
+            
+            console.log('Выбран робот:', robotId);
+        }
+
+        function startCommand(command) {
+            if (!selectedRobot) {
+                showQuickAlert('Выберите робота!');
+                return;
+            }
+            
+            if (activeCommand === command) return;
+            
+            activeCommand = command;
+            sendCommand(command);
+            vibrateDevice(30);
+            
+            // Визуальная обратная связь
+            event.target.classList.add('btn-active');
+        }
+
+        function stopCommand() {
+            if (activeCommand) {
+                sendCommand('stop');
+                activeCommand = null;
+            }
+            
+            // Убираем активное состояние со всех кнопок
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.classList.remove('btn-active');
+            });
+        }
+
+        function sendCommand(command) {
+            if (!selectedRobot && command !== 'stop') {
+                showQuickAlert('Выберите робота!');
+                return;
+            }
+            
+            console.log(`Команда: ${command} → ${selectedRobot}`);
+            
+            // Симуляция отправки команды роботу
+            if (isConnected) {
+                // В реальной системе здесь WebSocket
+                console.log('Команда отправлена');
+            }
+        }
+
+        function changeSpeed() {
+            const speeds = [128, 200, 255]; // 50%, 80%, 100%
+            const labels = ['50%', '80%', '100%'];
+            
+            speedLevel = (speedLevel + 1) % 3;
+            currentSpeed = speeds[speedLevel];
+            
+            document.getElementById('speedBtn').innerHTML = 
+                `⚡<br><small>${labels[speedLevel]}</small>`;
+            
+            vibrateDevice(40);
+            
+            if (selectedRobot) {
+                sendCommand('setSpeed');
+            }
+        }
+
+        function toggleChat() {
+            const panel = document.getElementById('chatPanel');
+            const overlay = document.querySelector('.overlay');
+            
+            panel.classList.toggle('open');
+            overlay.classList.toggle('active');
+            
+            vibrateDevice(30);
+        }
+
+        function closeChat() {
+            document.getElementById('chatPanel').classList.remove('open');
+            document.querySelector('.overlay').classList.remove('active');
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                const messages = document.getElementById('chatMessages');
+                const time = new Date().toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
+                messages.innerHTML += `<div>[${time}] Вы: ${message}</div>`;
+                messages.scrollTop = messages.scrollHeight;
+                input.value = '';
+                vibrateDevice(30);
+            }
+        }
+
+        function setupTouchEvents() {
+            // Предотвращаем зум и контекстное меню
+            document.addEventListener('gesturestart', e => e.preventDefault());
+            document.addEventListener('contextmenu', e => e.preventDefault());
+            
+            // Добавляем поддержку мыши для кнопок движения
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                if (btn.ontouchstart) {
+                    btn.onmousedown = btn.ontouchstart;
+                    btn.onmouseup = btn.ontouchend;
+                }
+            });
+        }
+
+        function vibrateDevice(duration = 50) {
+            if ('vibrate' in navigator) {
+                navigator.vibrate(duration);
+            }
+        }
+
+        function showQuickAlert(message) {
+            const alert = document.createElement('div');
+            alert.textContent = message;
+            alert.style.cssText = `
+                position: fixed;
+                top: 20%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(244, 67, 54, 0.9);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 20px;
+                z-index: 1000;
+                font-size: 14px;
+                backdrop-filter: blur(5px);
+            `;
+            
+            document.body.appendChild(alert);
+            vibrateDevice(100);
+            
+            setTimeout(() => alert.remove(), 1500);
+        }
+
+        function startMonitoring() {
+            // Симуляция изменения статуса
+            setInterval(() => {
+                const robots = Math.floor(Math.random() * 3) + 2;
+                document.getElementById('activeRobots').textContent = `${robots}/4`;
+                
+                const ping = 150 + Math.floor(Math.random() * 80);
+                document.getElementById('latency').textContent = `~${ping}ms`;
+                
+                const viewers = 40 + Math.floor(Math.random() * 20);
+                document.getElementById('viewerCount').textContent = viewers;
+            }, 3000);
+        }
+
+        // Управление с клавиатуры (для тестирования на ПК)
+        document.addEventListener('keydown', (e) => {
+            if (!selectedRobot) return;
+            
+            switch(e.key.toLowerCase()) {
+                case 'w': case 'arrowup':
+                    e.preventDefault();
+                    startCommand('forward');
+                    break;
+                case 's': case 'arrowdown':
+                    e.preventDefault();
+                    startCommand('backward');
+                    break;
+                case 'a': case 'arrowleft':
+                    e.preventDefault();
+                    startCommand('left');
+                    break;
+                case 'd': case 'arrowright':
+                    e.preventDefault();
+                    startCommand('right');
+                    break;
+                case ' ':
+                    e.preventDefault();
+                    sendCommand('kick');
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (['w', 's', 'a', 'd', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                stopCommand();
+            }
+        });
+
+        // Обработка Enter в чате
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
