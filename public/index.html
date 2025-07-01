@@ -51,6 +51,11 @@
             background: #4CAF50;
             display: inline-block;
             margin-right: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .connection-dot.disconnected {
+            background: #F44336;
         }
 
         /* Видео секция - занимает верхнюю половину */
@@ -157,6 +162,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
         }
 
         .robot-btn-mini.blue {
@@ -172,8 +178,27 @@
             box-shadow: 0 0 15px rgba(255,255,255,0.5);
         }
 
+        .robot-btn-mini.disconnected {
+            opacity: 0.5;
+            background: rgba(128,128,128,0.5) !important;
+        }
+
         .robot-btn-mini:active {
             transform: scale(0.95);
+        }
+
+        .robot-status-dot {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4CAF50;
+        }
+
+        .robot-status-dot.disconnected {
+            background: #F44336;
         }
 
         /* Компактное управление движением */
@@ -209,6 +234,11 @@
         .control-btn:active {
             transform: scale(0.9);
             background: rgba(255,255,255,0.4);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .btn-up { grid-area: up; }
@@ -407,8 +437,8 @@
         <div class="compact-header">
             <div class="logo">🤖 Роботы-Футболисты</div>
             <div>
-                <span class="connection-dot"></span>
-                <span id="connectionStatus">Подключено</span>
+                <span class="connection-dot" id="connectionDot"></span>
+                <span id="connectionStatus">Подключение...</span>
             </div>
         </div>
 
@@ -436,8 +466,8 @@
                     </div>
                 </div>
                 <div class="status-mini">
-                    <div>Роботы: <span id="activeRobots">2/4</span></div>
-                    <div>Пинг: <span id="latency">~180ms</span></div>
+                    <div>Роботы: <span id="activeRobots">0/4</span></div>
+                    <div>Игроки: <span id="playersCount">0</span></div>
                 </div>
             </div>
         </div>
@@ -446,10 +476,22 @@
         <div class="controls-section">
             <!-- Быстрый выбор робота -->
             <div class="robot-quick-select">
-                <button class="robot-btn-mini blue" onclick="selectRobot('blue1')">Б1</button>
-                <button class="robot-btn-mini blue" onclick="selectRobot('blue2')">Б2</button>
-                <button class="robot-btn-mini red" onclick="selectRobot('red1')">К1</button>
-                <button class="robot-btn-mini red" onclick="selectRobot('red2')">К2</button>
+                <button class="robot-btn-mini blue disconnected" onclick="selectRobot('blue1')" id="robot-blue1">
+                    Б1
+                    <span class="robot-status-dot disconnected"></span>
+                </button>
+                <button class="robot-btn-mini blue disconnected" onclick="selectRobot('blue2')" id="robot-blue2">
+                    Б2
+                    <span class="robot-status-dot disconnected"></span>
+                </button>
+                <button class="robot-btn-mini red disconnected" onclick="selectRobot('red1')" id="robot-red1">
+                    К1
+                    <span class="robot-status-dot disconnected"></span>
+                </button>
+                <button class="robot-btn-mini red disconnected" onclick="selectRobot('red2')" id="robot-red2">
+                    К2
+                    <span class="robot-status-dot disconnected"></span>
+                </button>
             </div>
 
             <!-- Управление движением -->
@@ -458,24 +500,39 @@
                 
                 <button class="control-btn btn-up" 
                         ontouchstart="startCommand('forward')" 
-                        ontouchend="stopCommand()">↑</button>
+                        ontouchend="stopCommand()"
+                        onmousedown="startCommand('forward')" 
+                        onmouseup="stopCommand()"
+                        disabled>↑</button>
                 
                 <button class="control-btn btn-left" 
                         ontouchstart="startCommand('left')" 
-                        ontouchend="stopCommand()">←</button>
+                        ontouchend="stopCommand()"
+                        onmousedown="startCommand('left')" 
+                        onmouseup="stopCommand()"
+                        disabled>←</button>
                 
                 <button class="control-btn btn-stop" 
-                        onclick="sendCommand('stop')">⏹</button>
+                        onclick="sendCommand('stop')"
+                        disabled>⏹</button>
                 
                 <button class="control-btn btn-right" 
                         ontouchstart="startCommand('right')" 
-                        ontouchend="stopCommand()">→</button>
+                        ontouchend="stopCommand()"
+                        onmousedown="startCommand('right')" 
+                        onmouseup="stopCommand()"
+                        disabled>→</button>
                 
                 <button class="control-btn btn-down" 
                         ontouchstart="startCommand('backward')" 
-                        ontouchend="stopCommand()">↓</button>
+                        ontouchend="stopCommand()"
+                        onmousedown="startCommand('backward')" 
+                        onmouseup="stopCommand()"
+                        disabled>↓</button>
                 
-                <button class="control-btn btn-kick" onclick="sendCommand('kick')">
+                <button class="control-btn btn-kick" 
+                        onclick="sendCommand('kick')"
+                        disabled>
                     ⚽<br><small>УДАР</small>
                 </button>
                 
@@ -497,16 +554,13 @@
         <div class="chat-header">
             <div>
                 💬 Чат 
-                <span class="viewers-mini" id="viewerCount">47</span>
+                <span class="viewers-mini" id="viewerCount">0</span>
             </div>
             <button class="close-chat" onclick="closeChat()">×</button>
         </div>
         
         <div class="chat-messages" id="chatMessages">
-            <div style="opacity: 0.7;">[15:42] Система: Добро пожаловать!</div>
-            <div>[15:43] Алекс: Круто! 🔥</div>
-            <div>[15:44] Мария: Синие вперед! 💙</div>
-            <div>[15:45] Гость: Как управлять?</div>
+            <div style="opacity: 0.7;">[Система] Добро пожаловать в арену роботов!</div>
         </div>
         
         <div class="chat-input-container">
@@ -515,48 +569,199 @@
         </div>
     </div>
 
+    <!-- Подключение Socket.IO -->
+    <script src="/socket.io/socket.io.js"></script>
     <script>
+        // Глобальные переменные
+        let socket = null;
         let selectedRobot = null;
         let currentSpeed = 200;
         let speedLevel = 2; // 0,1,2 (50%, 80%, 100%)
         let activeCommand = null;
-        let isConnected = true;
+        let isConnected = false;
+        let playerId = null;
 
         // Инициализация
         window.addEventListener('load', () => {
             setupTouchEvents();
-            startMonitoring();
+            connectToServer();
         });
 
+        // ===========================================
+        // ПОДКЛЮЧЕНИЕ К СЕРВЕРУ
+        // ===========================================
+
+        function connectToServer() {
+            console.log('🔌 Подключение к серверу...');
+            
+            socket = io();
+
+            socket.on('connect', () => {
+                console.log('✅ Подключено к серверу');
+                isConnected = true;
+                updateConnectionStatus('Подключено', true);
+                
+                // Регистрируемся как игрок
+                socket.emit('playerJoin', { 
+                    playerName: 'Игрок' + Math.floor(Math.random() * 1000) 
+                });
+            });
+
+            socket.on('disconnect', () => {
+                console.log('❌ Отключен от сервера');
+                isConnected = false;
+                updateConnectionStatus('Отключено', false);
+                disableAllControls();
+            });
+
+            socket.on('playerRegistered', (data) => {
+                playerId = data.playerId;
+                console.log('👤 Зарегистрирован как:', data.playerName);
+                addChatMessage('Система', `Добро пожаловать, ${data.playerName}!`);
+            });
+
+            socket.on('gameState', (data) => {
+                updateGameState(data);
+            });
+
+            socket.on('robotConnected', (data) => {
+                console.log('🤖 Робот подключился:', data.robotId);
+                addChatMessage('Система', `Робот ${data.robotId} подключился`);
+            });
+
+            socket.on('robotDisconnected', (data) => {
+                console.log('🤖 Робот отключился:', data.robotId);
+                addChatMessage('Система', `Робот ${data.robotId} отключился`);
+            });
+
+            socket.on('robotTelemetry', (data) => {
+                updateRobotTelemetry(data);
+            });
+
+            socket.on('commandQueued', (data) => {
+                console.log('📤 Команда добавлена в очередь:', data);
+            });
+
+            socket.on('commandExecuted', (data) => {
+                console.log('✅ Команда выполнена:', data);
+            });
+
+            socket.on('error', (data) => {
+                console.error('❌ Ошибка:', data.message);
+                showQuickAlert(data.message);
+            });
+
+            socket.on('robotSelected', (data) => {
+                if (data.success) {
+                    enableControls();
+                    console.log('🎯 Робот выбран:', data.robotId);
+                }
+            });
+        }
+
+        // ===========================================
+        // ОБНОВЛЕНИЕ ИНТЕРФЕЙСА
+        // ===========================================
+
+        function updateConnectionStatus(status, connected) {
+            document.getElementById('connectionStatus').textContent = status;
+            const dot = document.getElementById('connectionDot');
+            
+            if (connected) {
+                dot.classList.remove('disconnected');
+            } else {
+                dot.classList.add('disconnected');
+            }
+        }
+
+        function updateGameState(data) {
+            // Обновляем счет
+            if (data.score) {
+                document.getElementById('blueScore').textContent = data.score.blue;
+                document.getElementById('redScore').textContent = data.score.red;
+            }
+
+            // Обновляем статистику
+            let connectedRobots = 0;
+            if (data.robots) {
+                Object.keys(data.robots).forEach(robotId => {
+                    const robot = data.robots[robotId];
+                    const robotBtn = document.getElementById(`robot-${robotId}`);
+                    const statusDot = robotBtn.querySelector('.robot-status-dot');
+                    
+                    if (robot.connected) {
+                        connectedRobots++;
+                        robotBtn.classList.remove('disconnected');
+                        statusDot.classList.remove('disconnected');
+                    } else {
+                        robotBtn.classList.add('disconnected');
+                        statusDot.classList.add('disconnected');
+                    }
+                });
+            }
+
+            document.getElementById('activeRobots').textContent = `${connectedRobots}/4`;
+            document.getElementById('playersCount').textContent = data.playersCount || 0;
+        }
+
+        function updateRobotTelemetry(data) {
+            // Обновляем информацию о роботе если он выбран
+            if (selectedRobot === data.robotId) {
+                const names = {
+                    'blue1': '🔵 Синий #1',
+                    'blue2': '🔵 Синий #2', 
+                    'red1': '🔴 Красный #1',
+                    'red2': '🔴 Красный #2'
+                };
+                
+                document.getElementById('robotInfo').innerHTML = 
+                    `${names[data.robotId]} | 🔋${data.battery}% | 📡${data.wifiStrength}dBm`;
+            }
+        }
+
+        // ===========================================
+        // УПРАВЛЕНИЕ РОБОТАМИ
+        // ===========================================
+
         function selectRobot(robotId) {
+            if (!isConnected) {
+                showQuickAlert('Нет подключения к серверу!');
+                return;
+            }
+
             vibrateDevice(50);
             
-            // Снимаем выделение
+            // Снимаем выделение со всех кнопок
             document.querySelectorAll('.robot-btn-mini').forEach(btn => {
                 btn.classList.remove('selected');
             });
             
-            // Выделяем новый
-            event.target.classList.add('selected');
+            // Выделяем новую кнопку
+            const robotBtn = document.getElementById(`robot-${robotId}`);
+            
+            // Проверяем, подключен ли робот
+            if (robotBtn.classList.contains('disconnected')) {
+                showQuickAlert('Робот не подключен!');
+                return;
+            }
+            
+            robotBtn.classList.add('selected');
             selectedRobot = robotId;
             
-            // Обновляем информацию
-            const names = {
-                'blue1': '🔵 Синий #1',
-                'blue2': '🔵 Синий #2',
-                'red1': '🔴 Красный #1',
-                'red2': '🔴 Красный #2'
-            };
+            // Отправляем запрос на выбор робота
+            socket.emit('selectRobot', { robotId });
             
-            document.getElementById('robotInfo').innerHTML = 
-                `${names[robotId]} | 🔋87% | ✅Готов`;
-            
-            console.log('Выбран робот:', robotId);
+            console.log('🎯 Выбираю робота:', robotId);
         }
 
         function startCommand(command) {
             if (!selectedRobot) {
                 showQuickAlert('Выберите робота!');
+                return;
+            }
+            
+            if (!isConnected) {
+                showQuickAlert('Нет подключения!');
                 return;
             }
             
@@ -567,7 +772,9 @@
             vibrateDevice(30);
             
             // Визуальная обратная связь
-            event.target.classList.add('btn-active');
+            if (event && event.target) {
+                event.target.classList.add('btn-active');
+            }
         }
 
         function stopCommand() {
@@ -588,13 +795,19 @@
                 return;
             }
             
-            console.log(`Команда: ${command} → ${selectedRobot}`);
-            
-            // Симуляция отправки команды роботу
-            if (isConnected) {
-                // В реальной системе здесь WebSocket
-                console.log('Команда отправлена');
+            if (!isConnected) {
+                showQuickAlert('Нет подключения!');
+                return;
             }
+            
+            console.log(`🎮 Команда: ${command} → ${selectedRobot}`);
+            
+            // Отправляем команду через WebSocket
+            socket.emit('robotCommand', {
+                command: command,
+                speed: currentSpeed,
+                robotId: selectedRobot
+            });
         }
 
         function changeSpeed() {
@@ -608,11 +821,34 @@
                 `⚡<br><small>${labels[speedLevel]}</small>`;
             
             vibrateDevice(40);
-            
-            if (selectedRobot) {
-                sendCommand('setSpeed');
-            }
         }
+
+        // ===========================================
+        // УПРАВЛЕНИЕ ЭЛЕМЕНТАМИ ИНТЕРФЕЙСА
+        // ===========================================
+
+        function enableControls() {
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.disabled = false;
+            });
+        }
+
+        function disableAllControls() {
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.disabled = true;
+            });
+            
+            selectedRobot = null;
+            document.getElementById('robotInfo').textContent = 'Выберите робота';
+            
+            document.querySelectorAll('.robot-btn-mini').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+        }
+
+        // ===========================================
+        // ЧАТ
+        // ===========================================
 
         function toggleChat() {
             const panel = document.getElementById('chatPanel');
@@ -634,27 +870,33 @@
             const message = input.value.trim();
             
             if (message) {
-                const messages = document.getElementById('chatMessages');
-                const time = new Date().toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
-                messages.innerHTML += `<div>[${time}] Вы: ${message}</div>`;
-                messages.scrollTop = messages.scrollHeight;
+                addChatMessage('Вы', message);
                 input.value = '';
                 vibrateDevice(30);
+                
+                // В реальной системе здесь отправка через WebSocket
+                // socket.emit('chatMessage', { message });
             }
         }
+
+        function addChatMessage(sender, message) {
+            const messages = document.getElementById('chatMessages');
+            const time = new Date().toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.innerHTML = `[${time}] ${sender}: ${message}`;
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        // ===========================================
+        // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+        // ===========================================
 
         function setupTouchEvents() {
             // Предотвращаем зум и контекстное меню
             document.addEventListener('gesturestart', e => e.preventDefault());
             document.addEventListener('contextmenu', e => e.preventDefault());
-            
-            // Добавляем поддержку мыши для кнопок движения
-            document.querySelectorAll('.control-btn').forEach(btn => {
-                if (btn.ontouchstart) {
-                    btn.onmousedown = btn.ontouchstart;
-                    btn.onmouseup = btn.ontouchend;
-                }
-            });
         }
 
         function vibrateDevice(duration = 50) {
@@ -683,21 +925,7 @@
             document.body.appendChild(alert);
             vibrateDevice(100);
             
-            setTimeout(() => alert.remove(), 1500);
-        }
-
-        function startMonitoring() {
-            // Симуляция изменения статуса
-            setInterval(() => {
-                const robots = Math.floor(Math.random() * 3) + 2;
-                document.getElementById('activeRobots').textContent = `${robots}/4`;
-                
-                const ping = 150 + Math.floor(Math.random() * 80);
-                document.getElementById('latency').textContent = `~${ping}ms`;
-                
-                const viewers = 40 + Math.floor(Math.random() * 20);
-                document.getElementById('viewerCount').textContent = viewers;
-            }, 3000);
+            setTimeout(() => alert.remove(), 2000);
         }
 
         // Управление с клавиатуры (для тестирования на ПК)
@@ -743,3 +971,4 @@
     </script>
 </body>
 </html>
+                
